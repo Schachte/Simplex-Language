@@ -1,7 +1,5 @@
 package core;
 
-import java.util.List;
-
 public abstract class Expression {
     public interface Visitor<T> {
         T visitBinaryExpression(Binary expression);
