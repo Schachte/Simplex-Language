@@ -6,19 +6,19 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Scanner;
+import java.util.List;
 
 public class Simplex {
     private static boolean hadError = false;
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 1) {
+        if (args.length == 1 && args[0].equals("slex")) {
+            runPrompt();
+        } else if (args.length == 2 && args[0].startsWith("slex") && args[0].endsWith(".lx")) {
+            runFile(args[1]);
+        } else {
             System.out.println("Usage: slex [script]");
             System.exit(64);
-        } else if (args.length == 1) {
-            runFile(args[0]);
-        } else {
-            runPrompt();
         }
     }
 
@@ -38,18 +38,18 @@ public class Simplex {
         BufferedReader reader = new BufferedReader(input);
 
         for (; ; ) {
-            System.out.print("> ");
+            System.out.print(">>> ");
             run(reader.readLine());
         }
     }
 
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
-//        List<Token> tokens = scanner.scanTokens();
-//
-//        for (Token token : tokens) {
-//            System.out.println(tokens);
-//        }
+        List<Token> tokens = scanner.scanTokens();
+
+        for (Token token : tokens) {
+            System.out.println(token);
+        }
     }
 
     public static void error(int line, String message) {

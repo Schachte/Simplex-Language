@@ -1,20 +1,46 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static core.TokenType.*;
 
 public class Scanner {
     private final String source;
+
     private final List<Token> tokens = new ArrayList<>();
+
+    private static final Map<String, TokenType> keywords;
+
+    static {
+        // Words that are reserved to be checked against identifiers
+        keywords = new HashMap<>();
+        keywords.put("and", AND);
+        keywords.put("class", CLASS);
+        keywords.put("else", ELSE);
+        keywords.put("false", FALSE);
+        keywords.put("for", FOR);
+        keywords.put("fun", FUN);
+        keywords.put("if", IF);
+        keywords.put("nil", NIL);
+        keywords.put("or", OR);
+        keywords.put("print", PRINT);
+        keywords.put("return", RETURN);
+        keywords.put("super", SUPER);
+        keywords.put("this", THIS);
+        keywords.put("true", TRUE);
+        keywords.put("var", VAR);
+        keywords.put("while", WHILE);
+    }
 
     // TODO: Add more advanced metadata support for tracking column failures
     private int start = 0;
     private int current = 0;
     private int line = 1;
 
-    public Scanner(String source, List<Token> tokens) {
+    public Scanner(String source) {
         this.source = source;
     }
 
@@ -29,7 +55,7 @@ public class Scanner {
     }
 
     private void scanToken() {
-        char c = advance();
+        char c = consumeToken();
         switch (c) {
             case '(':
                 addToken(LEFT_PAREN);
@@ -58,6 +84,12 @@ public class Scanner {
             case ';':
                 addToken(SEMICOLON);
                 break;
+            case '[':
+                addToken(LEFT_BRACKET);
+                break;
+            case ']':
+                addToken(RIGHT_BRACKET);
+                break;
             case '*':
                 addToken(STAR);
                 break;
@@ -73,11 +105,16 @@ public class Scanner {
             case '<':
                 addToken(match('=') ? LESS_EQUAL : LESS);
                 break;
+            case '\\':
+                if (match('n')) {
+                    addToken(NEWLINE);
+                }
+                break;
             case '/':
                 // Comments can begin with a slash, so adding special handling
                 if (match('/')) {
                     // A comment will go until the end of the line.
-                    while (peek() != '\n' && !isAtEnd()) advance();
+                    while (peek() != '\n' && !isAtEnd()) consumeToken();
                 } else {
                     addToken(SLASH);
                 }
@@ -94,15 +131,68 @@ public class Scanner {
                 string();
                 break;
             default:
-                Simplex.error(line, "Unexpected character.");
+                if (isDigit(c)) {
+                    number();
+                } else if (isAlpha(c)) {
+                    identifier();
+                } else {
+                    Simplex.error(line, "Unexpected character (column " + current + ")");
+                }
                 break;
         }
+    }
+
+    private void identifier() {
+        while (isAlphaNumeric(peek())) consumeToken();
+
+        // Check if the current token is a reserved word
+        String text = source.substring(start, current);
+        TokenType type = keywords.get(text);
+
+        if (type == null) type = IDENTIFIER;
+
+        addToken(type);
+    }
+
+    private boolean isAlpha(char c) {
+        return (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                c == '_';
+    }
+
+    private boolean isAlphaNumeric(char c) {
+        return isAlpha(c) || isDigit(c);
+    }
+
+    /**
+     * Helper method for valid digit check
+     */
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    private void number() {
+        // Keep consuming digit values until we hit EOL or a decimal delimiter
+        while (isDigit(peek())) consumeToken();
+
+        if (peek() == '.' && isDigit(peekNext())) {
+            // We want to consume the decimal point
+            consumeToken();
+            while (isDigit(peek())) consumeToken();
+        }
+
+        addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+    }
+
+    private char peekNext() {
+        if (current + 1 >= source.length()) return '\0';
+        return source.charAt(current + 1);
     }
 
     private void string() {
         while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n') line++;
-            advance();
+            consumeToken();
         }
 
         if (isAtEnd()) {
@@ -111,7 +201,7 @@ public class Scanner {
         }
 
         // Handle closing "
-        advance();
+        consumeToken();
 
         // Trim surrounding quotes
         String value = source.substring(start + 1, current - 1);
@@ -119,7 +209,7 @@ public class Scanner {
     }
 
     /**
-     * Similar to advance, but we do not actually consume the char, we do a lookahead
+     * Similar to consumeToken, but we do not actually consume the char, we do a lookahead
      */
     private char peek() {
         if (isAtEnd()) return '\0';
@@ -143,7 +233,7 @@ public class Scanner {
      *
      * @return the character that was consumed
      */
-    private char advance() {
+    private char consumeToken() {
         current++;
         return source.charAt(current - 1);
     }
@@ -163,7 +253,12 @@ public class Scanner {
         tokens.add(new Token(type, text, literal, line));
     }
 
+    /**
+     * Obviously not super feasible in practice
+     */
     private boolean isAtEnd() {
+
+        // TODO: Slight optimization by assigning this func. call to static const
         return current >= source.length();
     }
 }
