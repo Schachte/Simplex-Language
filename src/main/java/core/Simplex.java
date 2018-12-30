@@ -46,9 +46,19 @@ public class Simplex {
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
+        Parser parser = new Parser(tokens);
+        Expression expression = parser.parse();
 
-        for (Token token : tokens) {
-            System.out.println(token);
+        if (hadError) return;
+
+        System.out.println(new AstPrinter().print(expression));
+    }
+
+    public static void error(Token token, String message) {
+        if (token.tokenType == TokenType.EOF) {
+            report(token.line, " at end", message);
+        } else {
+            report(token.line, " at '" + token.lexeme + "'", message);
         }
     }
 

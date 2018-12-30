@@ -35,7 +35,6 @@ public class Scanner {
         keywords.put("while", WHILE);
     }
 
-    // TODO: Add more advanced metadata support for tracking column failures
     private int start = 0;
     private int current = 0;
     private int line = 1;

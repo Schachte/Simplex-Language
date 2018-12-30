@@ -1,16 +1,28 @@
 package core;
 
 import java.util.List;
+
 import static core.TokenType.*;
 
 // Recursive decent utilizing right-recursion
 public class Parser {
+
+    private static class ParseError extends RuntimeException {
+    }
 
     private final List<Token> tokens;
     private int current = 0;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
+    }
+
+    Expression parse() {
+        try {
+            return expression();
+        } catch (ParseError error) {
+            return null;
+        }
     }
 
     private Expression expression() {
@@ -77,7 +89,7 @@ public class Parser {
         if (match(TRUE)) return new Expression.Literal(true);
         if (match(NIL)) return new Expression.Literal(null);
 
-        if (match(NUMBER,STRING)) {
+        if (match(NUMBER, STRING)) {
             return new Expression.Literal(previous().literal);
         }
 
@@ -86,7 +98,14 @@ public class Parser {
             consume(RIGHT_PAREN, "Expect ') after expression.");
             return new Expression.Grouping(expression);
         }
-        return null;
+
+        throw error(peek(), "Expect expression.");
+    }
+
+    private Token consume(TokenType type, String message) {
+        if (check(type)) return advance();
+
+        throw error(peek(), message);
     }
 
     private boolean match(TokenType... types) {
@@ -119,5 +138,31 @@ public class Parser {
 
     private Token previous() {
         return tokens.get(current - 1);
+    }
+
+    private ParseError error(Token token, String message) {
+        Simplex.error(token, message);
+        return new ParseError();
+    }
+
+    private void synchronize() {
+        advance();
+        while (!isAtEnd()) {
+            if (previous().tokenType == SEMICOLON) return;
+
+            switch (peek().tokenType) {
+                case CLASS:
+                case FUN:
+                case VAR:
+                case FOR:
+                case IF:
+                case WHILE:
+                case PRINT:
+                case RETURN:
+                    return;
+            }
+
+            advance();
+        }
     }
 };
