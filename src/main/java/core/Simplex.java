@@ -9,7 +9,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Simplex {
+
+    private static final Interpreter interpreter = new Interpreter();
     private static boolean hadError = false;
+    private static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 1 && args[0].equals("slex")) {
@@ -28,6 +31,8 @@ public class Simplex {
     private static void runFile(String path) throws IOException {
         byte[] inputBytes = Files.readAllBytes(Paths.get(path));
         run(new String(inputBytes, Charset.defaultCharset()));
+        if (hadError) System.exit(65);
+        if (hadRuntimeError) System.exit(70);
     }
 
     /**
@@ -51,7 +56,7 @@ public class Simplex {
 
         if (hadError) return;
 
-        System.out.println(new AstPrinter().print(expression));
+        interpreter.interpret(expression);
     }
 
     public static void error(Token token, String message) {
@@ -64,6 +69,11 @@ public class Simplex {
 
     public static void error(int line, String message) {
         report(line, "", message);
+    }
+
+    public static void error(RuntimeError err) {
+        System.err.println(err.getMessage() + "\n[" + err.token.line + "]");
+        hadRuntimeError = true;
     }
 
     private static void report(int line, String where, String message) {
