@@ -256,8 +256,6 @@ public class Scanner {
      * Obviously not super feasible in practice
      */
     private boolean isAtEnd() {
-
-        // TODO: Slight optimization by assigning this func. call to static const
         return current >= source.length();
     }
 }
