@@ -1,17 +1,37 @@
 package core;
 
+import java.util.List;
+
 /**
  * Essentially operates as an "InterpreterVisitor" allowing us to walk the expression
  * tree in a cleaner fashion.
  */
-public class Interpreter implements Expression.Visitor<Object> {
-    public void interpret(Expression expr) {
+public class Interpreter implements Expression.Visitor<Object>, Stmt.Visitor<Void> {
+    public void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expr);
-            System.out.println(stringify(value));
-        } catch (RuntimeError e) {
-            Simplex.error(e);
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } catch (RuntimeError error) {
+            Simplex.runtimeError(error);
         }
+    }
+
+    private void execute(Stmt statement) {
+        statement.accept(this);
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expr stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
     }
 
     @Override

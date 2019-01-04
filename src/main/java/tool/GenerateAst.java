@@ -19,10 +19,15 @@ public class GenerateAst {
                 "Literal    : Object value",
                 "Unary      : Token operator, Expression right"
         ));
+
+        defineAst(outputDir, "Stmt", Arrays.asList(
+                "Expression : Expression expression",
+                "Print      : Expression expression"
+        ));
     }
 
     private static void defineAst(String outputDir, String baseName, List<String> types) throws FileNotFoundException, UnsupportedEncodingException {
-        String path = outputDir + "/Expression" + ".java";
+        String path = outputDir + "/" + baseName + ".java";
         PrintWriter writer = new PrintWriter(path, "UTF-8");
 
         writer.println("package core;");

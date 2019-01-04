@@ -52,11 +52,11 @@ public class Simplex {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
         Parser parser = new Parser(tokens);
-        Expression expression = parser.parse();
+        List<Stmt> statements = parser.parse();
 
         if (hadError) return;
 
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
     }
 
     public static void error(Token token, String message) {
@@ -71,7 +71,7 @@ public class Simplex {
         report(line, "", message);
     }
 
-    public static void error(RuntimeError err) {
+    public static void runtimeError(RuntimeError err) {
         System.err.println(err.getMessage() + "\n[" + err.token.line + "]");
         hadRuntimeError = true;
     }
