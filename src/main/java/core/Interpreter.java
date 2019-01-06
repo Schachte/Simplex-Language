@@ -7,6 +7,9 @@ import java.util.List;
  * tree in a cleaner fashion.
  */
 public class Interpreter implements Expression.Visitor<Object>, Stmt.Visitor<Void> {
+
+    private Environment environment = new Environment();
+
     public void interpret(List<Stmt> statements) {
         try {
             for (Stmt statement : statements) {
@@ -22,6 +25,25 @@ public class Interpreter implements Expression.Visitor<Object>, Stmt.Visitor<Voi
     }
 
     @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment prev = this.environment;
+        try {
+            this.environment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = prev;
+        }
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expr stmt) {
         evaluate(stmt.expression);
         return null;
@@ -32,6 +54,25 @@ public class Interpreter implements Expression.Visitor<Object>, Stmt.Visitor<Voi
         Object value = evaluate(stmt.expression);
         System.out.println(stringify(value));
         return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Object visitAssignExpression(Expression.Assign expression) {
+        Object value = evaluate(expression.value);
+
+        environment.assign(expression.name, value);
+        return value;
     }
 
     @Override
@@ -106,6 +147,11 @@ public class Interpreter implements Expression.Visitor<Object>, Stmt.Visitor<Voi
 
         // Unreachable
         return null;
+    }
+
+    @Override
+    public Object visitVariableExpression(Expression.Variable expression) {
+        return environment.get(expression.name);
     }
 
     private boolean isEqual(Object a, Object b) {

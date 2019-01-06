@@ -9,6 +9,11 @@ public class AstPrinter implements Expression.Visitor<String> {
     }
 
     @Override
+    public String visitAssignExpression(Assign expression) {
+        return null;
+    }
+
+    @Override
     public String visitBinaryExpression(Binary expression) {
         return parenthesizeExpression(expression.operator.lexeme, expression.left, expression.right);
     }
@@ -29,6 +34,11 @@ public class AstPrinter implements Expression.Visitor<String> {
     @Override
     public String visitUnaryExpression(Unary expression) {
         return parenthesizeExpression(expression.operator.lexeme, expression.right);
+    }
+
+    @Override
+    public String visitVariableExpression(Variable expression) {
+        return null;
     }
 
     private String parenthesizeExpression(String name, Expression... expressions) {

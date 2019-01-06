@@ -14,15 +14,19 @@ public class GenerateAst {
         }
         String outputDir = args[0];
         defineAst(outputDir, "Expression", Arrays.asList(
+                "Assign     : Token name, Expr value",
                 "Binary     : Expression left, Token operator, Expression right",
                 "Grouping   : Expression expression",
                 "Literal    : Object value",
-                "Unary      : Token operator, Expression right"
+                "Unary      : Token operator, Expression right",
+                "Variable   : Token name"
         ));
 
         defineAst(outputDir, "Stmt", Arrays.asList(
-                "Expression : Expression expression",
-                "Print      : Expression expression"
+                "Block      : List<Stmt> statements",
+                "Expr       : Expression expression",
+                "Print      : Expression expression",
+                "Var        : Token name, Expression initializer"
         ));
     }
 
